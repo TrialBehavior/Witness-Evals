@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Witness Evaluation - Posting Content Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .step-title {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8eaff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .variable-selector {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fafafa;
+        }
+        
+        .variable-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .variable-item:hover {
+            background: #f0f2ff;
+        }
+        
+        .variable-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        .variable-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        
+        .variable-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .variable-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .variable-item.selected .variable-label {
+            color: #e8eaff;
+        }
+        
+        .info-text {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-right: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .selection-count {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Witness Evaluation</h1>
+            <p>Posting Content Tool - Generate Professional Witness Evaluations</p>
+        </div>
+        
+        <div class="content">
+            <div id="errorMessage" class="error-message"></div>
+            
+            <!-- Step 1: Upload File -->
+            <div id="step1" class="step active">
+                <h2 class="step-title">Step 1: Upload SPSS Data File</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">Click to browse or drag and drop your .sav file here</div>
+                    <small style="color: #999;">Supported format: SPSS (.sav)</small>
+                    <input type="file" id="fileInput" accept=".sav" style="display: none;">
+                </div>
+                
+                <div id="fileInfo" class="file-info">
+                    <strong>File uploaded:</strong> <span id="fileName"></span><br>
+                    <strong>Number of rows:</strong> <span id="fileRows"></span>
+                </div>
+                
+                <div class="button-group">
+                    <div></div>
+                    <button id="nextToStep2" class="btn btn-primary" disabled>Next: Enter Details</button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Witness Details -->
+            <div id="step2" class="step">
+                <h2 class="step-title">Step 2: Enter Witness Details</h2>
+                
+                <div class="form-group">
+                    <label for="witnessName">Witness Name *</label>
+                    <input type="text" id="witnessName" placeholder="e.g., John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="evalDate">Evaluation Date *</label>
+                    <input type="date" id="evalDate" required>
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea; font-size: 18px;">Footer Information</h3>
+                
+                <div class="form-group">
+                    <label for="caseName">Case Name *</label>
+                    <input type="text" id="caseName" placeholder="e.g., Smith v. Johnson" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="caseId">Case ID *</label>
+                    <input type="text" id="caseId" placeholder="e.g., 2024-CV-12345" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="footerDate">Footer Date *</label>
+                    <input type="date" id="footerDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="witnessNumber">Witness # *</label>
+                    <input type="number" id="witnessNumber" placeholder="e.g., 3" min="1" required>
+                </div>
+                
+                <div class="button-group">
+                    <button id="backToStep1" class="btn btn-secondary">Back</button>
+                    <button id="nextToStep3" class="btn btn-primary">Next: Select Characteristics</button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Task 1 Variables -->
+            <div id="step3" class="step">
+                <h2 class="step-title">Step 3: Select Characteristics (Task 1)
+                    <span id="task1Count" class="selection-count">0 variables selected</span>
+                </h2>
+                
+                <p style="color: #666; margin-bottom: 20px;">
+                    Select the characteristic variables to include in the evaluation grid.
+                </p>
+                
+                <div id="task1Selector" class="variable-selector"></div>
+                
+                <div class="button-group">
+                    <button id="backToStep2" class="btn btn-secondary">Back</button>
+                    <button id="nextToStep4" class="btn btn-primary" disabled>Next: Select "Which Side" Question</button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Task 2 Variables -->
+            <div id="step4" class="step">
+                <h2 class="step-title">Step 4: Select "Which Side" Variables (Task 2)
+                    <span id="task2Count" class="selection-count">0 variables selected</span>
+                </h2>
+                
+                <div class="info-text">
+                    💡 Select 1 or 2 "Which side did testimony help?" variables. If you select 2, they will represent different defendants and appear as separate graphs stacked vertically.
+                </div>
+                
+                <div id="task2Selector" class="variable-selector"></div>
+                
+                <div class="button-group">
+                    <button id="backToStep3" class="btn btn-secondary">Back</button>
+                    <button id="generateDoc" class="btn btn-primary" disabled>Generate Document</button>
+                </div>
+            </div>
+            
+            <!-- Step 5: Generating -->
+            <div id="step5" class="step">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <h3>Generating your document...</h3>
+                    <p style="color: #666; margin-top: 10px;">This may take a few moments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let sessionId = null;
+        let variables = [];
+        let selectedTask1 = new Set();
+        let selectedTask2 = new Set();  // Changed from single variable to Set
+        
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        
+        // Set today's date as default
+        document.getElementById('evalDate').valueAsDate = new Date();
+        document.getElementById('footerDate').valueAsDate = new Date();
+        
+        // File upload handling
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        
+        async function handleFile(file) {
+            if (!file) return;
+            
+            if (!file.name.toLowerCase().endsWith('.sav')) {
+                showError('Please upload a valid SPSS (.sav) file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                sessionId = data.session_id;
+                variables = data.variables;
+                
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileRows').textContent = data.n_rows;
+                document.getElementById('fileInfo').classList.add('show');
+                document.getElementById('nextToStep2').disabled = false;
+                
+                hideError();
+            } catch (error) {
+                showError('Error uploading file: ' + error.message);
+            }
+        }
+        
+        // Navigation
+        document.getElementById('nextToStep2').addEventListener('click', () => {
+            showStep(2);
+        });
+        
+        document.getElementById('backToStep1').addEventListener('click', () => {
+            showStep(1);
+        });
+        
+        document.getElementById('nextToStep3').addEventListener('click', () => {
+            const witnessName = document.getElementById('witnessName').value.trim();
+            const evalDate = document.getElementById('evalDate').value;
+            const caseName = document.getElementById('caseName').value.trim();
+            const caseId = document.getElementById('caseId').value.trim();
+            const footerDate = document.getElementById('footerDate').value;
+            const witnessNumber = document.getElementById('witnessNumber').value;
+            
+            if (!witnessName || !evalDate || !caseName || !caseId || !footerDate || !witnessNumber) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            hideError();
+            populateTask1Selector();
+            showStep(3);
+        });
+        
+        document.getElementById('backToStep2').addEventListener('click', () => {
+            showStep(2);
+        });
+        
+        document.getElementById('nextToStep4').addEventListener('click', () => {
+            if (selectedTask1.size === 0) {
+                showError('Please select at least one characteristic variable');
+                return;
+            }
+            
+            hideError();
+            populateTask2Selector();
+            showStep(4);
+        });
+        
+        document.getElementById('backToStep3').addEventListener('click', () => {
+            showStep(3);
+        });
+        
+        document.getElementById('generateDoc').addEventListener('click', async () => {
+            if (selectedTask2.size === 0) {
+                showError('Please select at least one variable for Task 2');
+                return;
+            }
+            
+            hideError();
+            showStep(5);
+            
+            const witnessName = document.getElementById('witnessName').value.trim();
+            const evalDate = document.getElementById('evalDate').value;
+            const caseName = document.getElementById('caseName').value.trim();
+            const caseId = document.getElementById('caseId').value.trim();
+            const footerDate = document.getElementById('footerDate').value;
+            const witnessNumber = document.getElementById('witnessNumber').value;
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        witness_name: witnessName,
+                        date: evalDate,
+                        task1_variables: Array.from(selectedTask1),
+                        task2_variables: Array.from(selectedTask2),
+                        case_name: caseName,
+                        case_id: caseId,
+                        footer_date: footerDate,
+                        witness_number: witnessNumber
+                    })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Witness_Evaluation_${witnessName.replace(/\s+/g, '_')}.docx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Reset and go back to step 1
+                    setTimeout(() => {
+                        resetForm();
+                        showStep(1);
+                        alert('Document generated successfully!');
+                    }, 1000);
+                } else {
+                    const data = await response.json();
+                    showError(data.error || 'Error generating document');
+                    showStep(4);
+                }
+            } catch (error) {
+                showError('Error generating document: ' + error.message);
+                showStep(4);
+            }
+        });
+        
+        function populateTask1Selector() {
+            const selector = document.getElementById('task1Selector');
+            selector.innerHTML = '';
+            
+            variables.forEach(variable => {
+                const item = document.createElement('div');
+                item.className = 'variable-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="task1_${variable.name}" value="${variable.name}">
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 30px);">
+                        <div class="variable-name">${variable.name}</div>
+                        <div class="variable-label">${variable.label}</div>
+                    </div>
+                `;
+                
+                const checkbox = item.querySelector('input');
+                
+                item.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    if (checkbox.checked) {
+                        selectedTask1.add(variable.name);
+                        item.classList.add('selected');
+                    } else {
+                        selectedTask1.delete(variable.name);
+                        item.classList.remove('selected');
+                    }
+                    
+                    updateTask1Count();
+                });
+                
+                selector.appendChild(item);
+            });
+        }
+        
+        function populateTask2Selector() {
+            const selector = document.getElementById('task2Selector');
+            selector.innerHTML = '';
+            
+            variables.forEach(variable => {
+                const item = document.createElement('div');
+                item.className = 'variable-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="task2_${variable.name}" value="${variable.name}">
+                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 30px);">
+                        <div class="variable-name">${variable.name}</div>
+                        <div class="variable-label">${variable.label}</div>
+                    </div>
+                `;
+                
+                const checkbox = item.querySelector('input');
+                
+                item.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    if (checkbox.checked) {
+                        // Limit to max 2 selections
+                        if (selectedTask2.size >= 2) {
+                            showError('You can select a maximum of 2 variables for Task 2');
+                            checkbox.checked = false;
+                            return;
+                        }
+                        selectedTask2.add(variable.name);
+                        item.classList.add('selected');
+                    } else {
+                        selectedTask2.delete(variable.name);
+                        item.classList.remove('selected');
+                    }
+                    
+                    updateTask2Count();
+                    hideError();
+                });
+                
+                selector.appendChild(item);
+            });
+        }
+        
+        function updateTask1Count() {
+            document.getElementById('task1Count').textContent = 
+                `${selectedTask1.size} variable${selectedTask1.size !== 1 ? 's' : ''} selected`;
+            document.getElementById('nextToStep4').disabled = selectedTask1.size === 0;
+        }
+        
+        function updateTask2Count() {
+            document.getElementById('task2Count').textContent = 
+                `${selectedTask2.size} variable${selectedTask2.size !== 1 ? 's' : ''} selected`;
+            document.getElementById('generateDoc').disabled = selectedTask2.size === 0;
+        }
+        
+        function showStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+        
+        function resetForm() {
+            sessionId = null;
+            variables = [];
+            selectedTask1.clear();
+            selectedTask2.clear();
+            document.getElementById('fileInfo').classList.remove('show');
+            document.getElementById('nextToStep2').disabled = true;
+            document.getElementById('witnessName').value = '';
+            document.getElementById('evalDate').valueAsDate = new Date();
+            document.getElementById('caseName').value = '';
+            document.getElementById('caseId').value = '';
+            document.getElementById('footerDate').valueAsDate = new Date();
+            document.getElementById('witnessNumber').value = '';
+            fileInput.value = '';
+        }
+    </script>
+</body>
+</html>
